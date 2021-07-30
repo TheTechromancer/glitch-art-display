@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+
+import os
+import click
+import hashlib
+from jpeg import *
+import subprocess as sp
+from pathlib import Path
+from multiprocessing import cpu_count
+
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+cache_dir = Path.home() / '.cache/glitch-art-display'
+cache_dir.mkdir(exist_ok=True)
+
+
+frame_timings = [5, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1]
+
+
+def is_cached(filename):
+
+    if (cache_dir / filename).is_file():
+        return True
+    return False
+
+
+def find_images(directory):
+
+    valid_suffixes = ['.jpg', '.jpeg']
+    convert_suffixes = ['.png']
+
+    for root,dirs,files in os.walk(directory):
+        for file in files:
+            filename = Path(root) / file
+
+            # if image is a JPEG
+            if any([filename.suffix.lower().endswith(s) for s in valid_suffixes]):
+                yield filename
+
+            # if image is an unsupported image type
+            elif any([filename.suffix.lower().endswith(s) for s in convert_suffixes]):
+                # try to convert it with imagemagick
+                try:
+                    new_filename = cache_dir / (filename.stem + '.jpg')
+                    sp.run(['convert', str(filename), str(new_filename)], check=True)
+                    yield new_filename
+                except (FileNotFoundError, sp.CalledProcessError) as e:
+                    print(f'[!] Unsupported file: {filename.name}')
+                    print(f'[!]  - please install imagemagick in order to use {filename.suffix} files')
+
+
+def main(image_dir, output, glitch_amount=100, num_image_frames=25, num_transition_frames=30):
+
+    frame_groups = []
+    frames_output = Path(output)
+    frames_output.mkdir(exist_ok=True)
+    frame_number = 0
+
+    transition_frames = int(num_transition_frames/2)
+
+    for image in find_images(image_dir):
+
+        print(f'[+] Generating frames for {image.name}')
+
+        glitched_frames = []
+
+        with ThreadPoolExecutor(max_workers=cpu_count()) as pool:
+
+            image_bytes = bytearray(image.read_bytes())
+            image_hash = hashlib.md5(image_bytes).hexdigest()
+            png_filename = cache_dir / f'{image_hash}.png'
+            pool.submit(sp.run, ['convert', str(image), str(png_filename)], check=True)
+
+            # generate glitch frames
+            glitched_futures = []
+            for i in range(transition_frames):
+                #print(glitch_amount)
+                #print((i+1)/num_transition_frames)
+                amount = int(glitch_amount * ((i+1)/num_transition_frames))
+                glitched_futures.append(pool.submit(glitch, image, amount))
+
+            pool.shutdown(wait=True)
+            for glitched_future in glitched_futures:
+                glitched_frame = glitched_future.result()
+                glitched_frames.append(glitched_frame)
+
+        glitch_in = []
+        random.shuffle(frame_timings)
+        for i, glitched_image in enumerate(glitched_frames[::-1]):
+            glitch_group = []
+            for j in range(frame_timings[i % len(frame_timings)]):
+                glitch_group.append(glitched_image)
+            glitch_in.append(glitch_group)
+
+        normal = []
+        for i in range(num_image_frames):
+            normal.append(png_filename)
+
+        glitch_out = []
+        random.shuffle(frame_timings)
+        for i, glitched_image in enumerate(glitched_frames):
+            glitch_group = []
+            for j in range(frame_timings[i % len(frame_timings)]):
+                glitch_group.append(glitched_image)
+            glitch_out.append(glitch_group)
+
+        frame_groups.append([glitch_in, normal, glitch_out])
+
+    frames = []
+    interlace_frames = int(transition_frames/3)
+    for i, [glitch_in, normal, glitch_out] in enumerate(frame_groups):
+        for g in glitch_in:
+            frames += g
+        frames += normal
+        if i == len(frame_groups)-1:
+            for g in glitch_out:
+                frames += g
+        else:
+            # truncate end of this glitch group
+            glitch_out, glitch_interlaced = glitch_out[:-interlace_frames], glitch_out[-interlace_frames:]
+
+            # truncate beginning of next glitch group
+            frame_groups[i+1][0], glitch_next_interlaced = frame_groups[i+1][0][interlace_frames:], frame_groups[i+1][0][:interlace_frames]
+
+            #next_slice, frame_groups[i+1] = frame_groups[i+1][:interlace_frames], frame_groups[i+1][interlace_frames:]
+            #prev_slice, group = group[-interlace_frames:], group[:-interlace_frames]
+            
+            for g in glitch_out:
+                frames += g
+            for i in range(interlace_frames):
+                frames += glitch_next_interlaced[i]
+                frames += glitch_interlaced[i]
+
+
+    for frame_number, frame in enumerate(frames):
+        frame_name = frames_output / f'frame_{frame_number:06}.png'
+        frame_name.unlink(missing_ok=True)
+        frame_name.symlink_to(frame)
+
+    print('[+] All frames generated.')
+
+
+def glitch(image, amount=None):
+
+    print(f'[+] Glitching {image.name} by {amount}')
+
+    if amount is None:
+        amount = random.randint(0,99)
+    else:
+        amount = max(0, min(99, int(amount)-1))
+
+    image = Path(image)
+
+    image_bytes = bytearray(image.read_bytes())
+    image_hash = hashlib.md5(image_bytes).hexdigest()
+    jpeg = Jpeg(image_bytes)
+
+    jpeg_filename = cache_dir / f'{image_hash}_{amount}_{random.randint(0,9999999)}.jpg'
+    png_filename = cache_dir / f'{image_hash}_{amount}_{random.randint(0,9999999)}.png'
+
+    print(f'[+] Glitching {image.name} by {amount}')
+
+    # checked for cached files
+    #if is_cached(png_filename):
+    #    print(f'[+] Found cached frame for {png_filename}')
+
+    #else:
+    while 1:
+        try:
+            jpeg.amount      = amount
+            jpeg.seed        = random.randint(0,99)
+            jpeg.iterations  = max(0, min(115, int(amount*1.15)))
+
+            # create a new image if not cached
+            jpeg.save_image(jpeg_filename)
+            try:
+                sp.run(['convert', str(jpeg_filename), str(png_filename)], check=True)
+                break
+            except Exception:
+                continue
+
+        except JpegError as e:
+            print(f'[!] {e}')
+            continue
+
+    return png_filename
+
+
+
+if __name__ == '__main__':
+
+    @click.command()
+    @click.argument('input', required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True))
+    @click.argument('output', required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True))
+    @click.option('--amount', default=50, type=click.IntRange(1, 100, clamp=True), help='Glitch amount (1 to 100)')
+    @click.option('--normal-frames', default=25*20, type=int, help='Number of normal frames')
+    @click.option('--transition-frames', default=30, type=int, help='Number of glitchy transition frames.')
+    def go(input, output, amount, normal_frames, transition_frames):
+        main(input, output, amount, normal_frames, transition_frames)
+        click.echo(f"[+] Example: generate .MP4 with ffmpeg")
+        click.echo(f"ffmpeg -framerate 25 -i {output}frame_%06d.png /tmp/output.mp4")
+
+    go()

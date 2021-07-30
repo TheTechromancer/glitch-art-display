@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "glitch-art-display"
+version = "1.0.0"
+description = "Generates .MP4 slideshow with seizure-inducing glitch transitions"
+authors = ["TheTechromancer"]
+license = "GPL-3.0"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
