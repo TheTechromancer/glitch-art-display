@@ -5,8 +5,13 @@ description = "Generates .MP4 slideshow with seizure-inducing glitch transitions
 authors = ["TheTechromancer"]
 license = "GPL-3.0"
 
+[tool.poetry.scripts]
+glitch-art-display = 'glitch_art_display.main:main'
+
 [tool.poetry.dependencies]
 python = "^3.6"
+click = "^8.0.1"
+Pillow = "^8.3.1"
 
 [tool.poetry.dev-dependencies]
 
