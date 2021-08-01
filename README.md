@@ -15,6 +15,9 @@ $ glitch-art-display --amount 75 ~/Pictures /tmp/ffmpeg_frames
 
 # generate .MP4 from frames
 $ ffmpeg -framerate 25 -i /tmp/ffmpeg_frames/frame_%09d.png output.mp4
+
+# loop forever
+$ vlc --loop --fullscreen --no-video-title-show output.mp4
 ~~~
 
 ## Usage
