@@ -1,7 +1,7 @@
 # glitch-art-display
 Art display with seizure-inducing glitch transitions.
 
-https://user-images.githubusercontent.com/20261699/127774381-7aea0c09-d7f8-417d-9094-0578d211a160.mp4
+https://user-images.githubusercontent.com/20261699/127774463-903d5583-5281-4187-ba1e-d2a44b14e9c0.mp4
 
 ## Installation
 ~~~
