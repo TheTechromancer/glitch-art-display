@@ -14,7 +14,7 @@ cache_dir = Path.home() / '.cache/glitch-art-display'
 cache_dir.mkdir(exist_ok=True)
 
 
-frame_timings = [5, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+frame_timings = [5, 4, 3, 2, 2, 1, 1, 1, 1]
 
 
 def is_cached(filename):
