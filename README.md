@@ -8,10 +8,11 @@ $ pip install git+https://github.com/thetechromancer/glitch-art-display
 
 ## Example
 NOTE: All images must be the same resolution
+
 NOTE: Frames in the `OUTPUT` directory are symlinks only, so they take up very little space.
 ~~~
 # generate frames
-$ glitch-art-display --amount 75 ~/Pictures /tmp/ffmpeg_frames
+$ glitch-art-display --shuffle ~/Pictures /tmp/ffmpeg_frames
 
 # generate .MP4 from frames
 $ ffmpeg -framerate 25 -i /tmp/ffmpeg_frames/frame_%09d.png output.mp4
