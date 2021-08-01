@@ -61,7 +61,7 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
     if shuffle:
         random.shuffle(found_images)
 
-    for image in find_images(image_dir):
+    for image in found_images:
 
         print(f'[+] Generating frames for {image.name}')
 
