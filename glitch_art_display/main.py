@@ -57,7 +57,7 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
     frame_number = 0
 
     transition_frames = int(num_transition_frames/2)
-    found_images = find_images(image_dir)
+    found_images = list(find_images(image_dir))
     if shuffle:
         random.shuffle(found_images)
 
