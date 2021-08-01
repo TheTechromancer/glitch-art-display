@@ -14,7 +14,7 @@ cache_dir = Path.home() / '.cache/glitch-art-display'
 cache_dir.mkdir(exist_ok=True)
 
 
-frame_timings = [6, 5, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
+frame_timings = [5, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
 
 def is_cached(filename):
@@ -108,7 +108,7 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
         frame_groups.append([glitch_in, normal, glitch_out])
 
     frames = []
-    interlace_frames = max(1, int(transition_frames/4))
+    interlace_frames = max(2, min(int(transition_frames/4), 1))
     for i, [glitch_in, normal, glitch_out] in enumerate(frame_groups):
         for g in glitch_in:
             frames += g
