@@ -14,7 +14,7 @@ cache_dir = Path.home() / '.cache/glitch-art-display'
 cache_dir.mkdir(exist_ok=True)
 
 
-frame_timings = [5, 4, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1]
+frame_timings = [6, 5, 4, 3, 3, 2, 2, 2, 1, 1, 1, 1]
 
 
 def is_cached(filename):
@@ -49,7 +49,7 @@ def find_images(directory):
                     print(f'[!]  - please install imagemagick in order to use {filename.suffix} files')
 
 
-def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_transition_frames=30):
+def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_transition_frames=30, shuffle=False):
 
     frame_groups = []
     frames_output = Path(output)
@@ -57,6 +57,9 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
     frame_number = 0
 
     transition_frames = int(num_transition_frames/2)
+    found_images = find_images(image_dir)
+    if shuffle:
+        random.shuffle(found_images)
 
     for image in find_images(image_dir):
 
@@ -74,9 +77,7 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
             # generate glitch frames
             glitched_futures = []
             for i in range(transition_frames):
-                #print(glitch_amount)
-                #print((i+1)/num_transition_frames)
-                amount = int(glitch_amount * ((i+1)/num_transition_frames))
+                amount = int(glitch_amount * ((i+1)/transition_frames))
                 glitched_futures.append(pool.submit(glitch, image, amount, i))
 
             pool.shutdown(wait=True)
@@ -107,7 +108,7 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
         frame_groups.append([glitch_in, normal, glitch_out])
 
     frames = []
-    interlace_frames = int(transition_frames/3)
+    interlace_frames = max(1, int(transition_frames/4))
     for i, [glitch_in, normal, glitch_out] in enumerate(frame_groups):
         for g in glitch_in:
             frames += g
@@ -187,12 +188,13 @@ def main():
     @click.argument('input', required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True))
     @click.argument('output', required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, writable=True))
     @click.option('--amount', default=50, type=click.IntRange(1, 100, clamp=True), help='Glitch amount (1 to 100)')
-    @click.option('--normal-frames', default=25*20, type=int, help='Number of normal frames')
-    @click.option('--transition-frames', default=30, type=int, help='Number of glitchy transition frames.')
-    def go(input, output, amount, normal_frames, transition_frames):
-        gen_frames(input, output, amount, normal_frames, transition_frames)
+    @click.option('--normal-frames', default=25*25, type=int, help='Number of normal frames')
+    @click.option('--transition-frames', default=30, type=int, help='Number of glitchy transition frames')
+    @click.option('--shuffle', is_flag=True, help='Shuffle order of images')
+    def go(input, output, amount, normal_frames, transition_frames, shuffle):
+        gen_frames(input, output, amount, normal_frames, transition_frames, shuffle)
         click.echo(f"[+] Example: generate .MP4 with ffmpeg")
-        click.echo(f"ffmpeg -framerate 25 -i {output}frame_%09d.png /tmp/output.mp4")
+        click.echo(f"ffmpeg -framerate 25 -i {Path(output) / 'frame_%09d.png'} /tmp/output.mp4")
 
     go()
 
