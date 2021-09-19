@@ -83,7 +83,8 @@ def gen_frames(image_dir, output, glitch_amount=100, num_image_frames=25, num_tr
             pool.shutdown(wait=True)
             for glitched_future in glitched_futures:
                 glitched_frame = glitched_future.result()
-                glitched_frames.append(glitched_frame)
+                if glitched_frame:
+                    glitched_frames.append(glitched_frame)
 
         glitch_in = []
         random.shuffle(frame_timings)
@@ -150,7 +151,11 @@ def glitch(image, amount=None, sequence=''):
 
     image_bytes = bytearray(image.read_bytes())
     image_hash = hashlib.md5(image_bytes).hexdigest()
-    jpeg = Jpeg(image_bytes)
+    try:
+        jpeg = Jpeg(image_bytes)
+    except JpegError as e:
+        print(f'[!] {e}')
+        return
 
     jpeg_filename = cache_dir / f'{image_hash}_{amount}_{sequence}.jpg'
     png_filename = cache_dir / f'{image_hash}_{amount}_{sequence}.png'
