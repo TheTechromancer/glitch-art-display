@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "glitch-art-display"
-version = "1.0.0"
+version = "1.0.1"
 description = "Generates .MP4 slideshow with seizure-inducing glitch transitions"
 authors = ["TheTechromancer"]
 license = "GPL-3.0"
