@@ -143,7 +143,11 @@ def gen_frames(image_dir, output, glitch_amount=100, fps=25, num_image_frames=25
             print(f'\r[+] Rendering frame {i:,}/{len(frames):,} ({i/len(frames)*100:.1f}%)', end='')
             frame = str(frame)
             if frame != prev_frame:
-                read_frame = imageio.imread(frame, pilmode='RGB')
+                try:
+                    read_frame = imageio.imread(frame, pilmode='RGB')
+                except Exception as e:
+                    print(f'[!] Error reading {frame}: {e}')
+                    continue
             try:
                 w.append_data(read_frame)
             except ValueError:
