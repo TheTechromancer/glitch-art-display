@@ -146,13 +146,13 @@ def gen_frames(image_dir, output, glitch_amount=100, fps=25, num_image_frames=25
                 try:
                     read_frame = imageio.imread(frame, pilmode='RGB')
                 except Exception as e:
-                    print(f'[!] Error reading {frame}: {e}')
+                    print(f'\n[!] Error reading {frame}: {e}')
                     continue
             try:
                 w.append_data(read_frame)
-            except ValueError:
-                print(f'[!] {frame}')
-                raise
+            except ValueError as e:
+                print(f'\n[!] Error appending {frame}: {e}')
+                continue
             prev_frame = str(frame)
     finally:
         with suppress(Exception):
