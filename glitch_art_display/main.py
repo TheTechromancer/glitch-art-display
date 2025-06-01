@@ -44,7 +44,7 @@ def find_images(directory):
                 # try to convert it with imagemagick
                 try:
                     new_filename = cache_dir / (filename.stem + '.jpg')
-                    sp.run(['convert', str(filename), str(new_filename)], check=True)
+                    sp.run(['magick', 'convert', str(filename), str(new_filename)], check=True)
                     yield new_filename
                 except (FileNotFoundError, sp.CalledProcessError) as e:
                     print(f'[!] Unsupported file: {filename.name}')
@@ -75,7 +75,7 @@ def gen_frames(image_dir, output, glitch_amount=100, fps=25, num_image_frames=25
                 image_hash = hashlib.md5(image_bytes).hexdigest()
                 png_filename = cache_dir / f'{image_hash}.png'
                 if not png_filename.exists():
-                    pool.submit(sp.run, ['convert', str(image), str(png_filename)], check=True)
+                    pool.submit(sp.run, ['magick', 'convert', str(image), str(png_filename)], check=True)
 
                 # generate glitch frames
                 glitched_futures = []
@@ -199,7 +199,7 @@ def glitch(image, amount=None, sequence=''):
                 # create a new image if not cached
                 jpeg.save_image(jpeg_filename)
                 try:
-                    sp.run(['convert', str(jpeg_filename), str(png_filename)], check=True)
+                    sp.run(['magick', 'convert', str(jpeg_filename), str(png_filename)], check=True)
                     break
                 except Exception:
                     continue
