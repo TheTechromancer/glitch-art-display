@@ -5,7 +5,7 @@ https://user-images.githubusercontent.com/20261699/127774463-903d5583-5281-4187-
 
 ## Installation
 ~~~bash
-pip install git+https://github.com/thetechromancer/glitch-art-display
+pipx install git+https://github.com/thetechromancer/glitch-art-display
 ~~~
 
 ## Example
